@@ -17,7 +17,7 @@ def index():
     return {'message': "This is the home page of this API. Go to /docs to see available endpoints"}
 
 
-@app.get('/api/{user_id}')
+@app.get('/api/user/{user_id}')
 def sample_request(user_id: str):
     return {'message': f'Hello! @{user_id}'}
 
