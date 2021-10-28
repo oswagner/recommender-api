@@ -1,3 +1,4 @@
+from pydantic.tools import parse_obj_as
 import uvicorn
 from collect_data import DataHandler
 from fastapi import FastAPI
@@ -21,8 +22,9 @@ def sample_request(user_id: str):
     return {'message': f'Hello! @{user_id}'}
 
 @app.get('/api/most_used')
-def api1():
+def most_used_techniques():
     most_used_techniques = data_handler.most_used_techniques(as_json=True)
+    print(most_used_techniques)
     return most_used_techniques
 
 
