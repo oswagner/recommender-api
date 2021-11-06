@@ -51,3 +51,12 @@ def all():
     all_techniques_str = data_handler.all_techniques(as_json=True)
     model_response = model_mapper(all_techniques_str)
     return model_response
+
+@router.get('/top_rated_by_experts', 
+            response_model=List[Technique],
+            tags=["api"])
+async def top_rated_by_experts():
+    top_rated_by_experts_str = data_handler.get_top_rated_and_used_by_experts()
+    model_response = model_mapper(top_rated_by_experts_str)
+    return model_response
+
