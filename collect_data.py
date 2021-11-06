@@ -59,7 +59,7 @@ class DataHandler:
      
     
     def most_used_techniques(self, as_json=False):
-        df_techniques = self.__get_df_techniques(['_id','name', 'nameT','count'])
+        df_techniques = self.__get_df_techniques(['_id','name', 'nameT','count', 'rating'])
         most_used_technique = df_techniques.sort_values('count', ascending=False)
         # generate data csv
         # most_used_technique.to_csv("most_used_technique.csv", sep=',', encoding='utf-8')
@@ -83,6 +83,14 @@ class DataHandler:
           return top_rated_technique.to_json(orient="records", default_handler = str)
         else:
             return top_rated_technique
+
+    def all_techniques(self, as_json=False):
+        df_techniques = self.__get_df_techniques(['_id', 'name', 'nameT', 'count','rating'])
+        
+        if as_json:
+          return df_techniques.to_json(orient="records", default_handler = str)
+        else:
+            return df_techniques
 
     def get_ratings_from_techniques(self,techniques):
         all_ratings = []
@@ -131,29 +139,48 @@ class DataHandler:
         return algo
     
     def find_similar_users(self, algo, raw_user_id):
-        # if algo.trainset.knows_user(raw_user_id):
-        #     raise ValueError(f"User {raw_user_id} is unknown")
+        if algo.trainset.knows_user(raw_user_id):
+            raise ValueError(f"User {raw_user_id} is unknown")
         user_inner_id = algo.trainset.to_inner_uid(raw_user_id)
         neighbors = algo.get_neighbors(user_inner_id, k=5)
         neighbors_user_id = [algo.trainset.to_raw_uid(inner_id) for inner_id in neighbors]
         return neighbors_user_id
 
-    def techinque_recommendations(self,ratings_df, neighbors_user_id):
+    def techinque_recommendations(self,ratings_df, neighbors_user_id, numer_of_recommendations=None):
         recommendations = []
         for user_id in neighbors_user_id:
             print(f"User id = [{user_id}]")
             ratings = ratings_df.loc[ratings_df['user_id'] == user_id]
-            top_five = ratings.sort_values('rating', ascending=False).head(5)
-            list_tech_names = list(top_five['tech_name'])
-            recommendations.extend(list_tech_names)
+            if numer_of_recommendations is None:
+                list_tech_names = list(ratings['tech_name'])
+                recommendations.extend(list_tech_names)
+            else:
+                top_five = ratings.sort_values('rating', ascending=False).head(numer_of_recommendations)
+                list_tech_names = list(top_five['tech_name'])
+                recommendations.extend(list_tech_names)
 
         recommendations = list(set(recommendations))
         df_tech = self.get_df_techniques()
         df_tech = df_tech.loc[df_tech['name'].isin(recommendations)]
         json_value = df_tech[['_id','name', 'nameT']].to_json(orient="records", default_handler = str)
         return json_value
-# %%
 
+
+# objetivos
+#df_tech = df_tech.loc[df_tech['objective'][0].isin(recommendations)]
+
+# etapas brown
+# inspiration, ideation, implementation
+# models[0].label[0]
+
+# etapas gerais
+# problems sapce, solution space
+# models[1].label[0]
+
+# trehshold = 10 mais
+# por experts em DT
+
+    
 # data_handler = DataHandler()
 # techniques = data_handler.get_techniques()
 # all_ratings = data_handler.get_ratings_from_techniques(techniques)
