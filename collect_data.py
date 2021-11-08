@@ -64,39 +64,22 @@ class DataHandler:
         return ratings_df
      
     
-    def most_used_techniques(self, as_json=False):
+    def most_used_techniques(self):
         df_techniques = self.__get_df_techniques(['_id','name', 'nameT','count', 'rating'])
         most_used_technique = df_techniques.sort_values('count', ascending=False)
-        # generate data csv
-        # most_used_technique.to_csv("most_used_technique.csv", sep=',', encoding='utf-8')
-
-        # generate data html 
-        # most_used_technique.to_html("sample.html")
-
-        # generate data json
-        # most_used_technique.to_json("sample.json", orient="records", default_handler = str)
-        
-        if as_json:
-            return most_used_technique.to_json(orient="records", default_handler = str)
-        else:
-            return most_used_technique
+        return most_used_technique.to_json(orient="records", default_handler = str)
     
-    def top_rated_techniques(self, as_json=False):
+    def top_rated_techniques(self):
         df_techniques = self.__get_df_techniques(['_id', 'name', 'nameT', 'rating'])
         top_rated_technique = df_techniques.sort_values('rating',  ascending=False)
-        
-        if as_json:
-          return top_rated_technique.to_json(orient="records", default_handler = str)
-        else:
-            return top_rated_technique
+                
+        return top_rated_technique.to_json(orient="records", default_handler = str)
 
-    def all_techniques(self, as_json=False):
+
+    def all_techniques(self):
         df_techniques = self.__get_df_techniques(['_id', 'name', 'nameT', 'count','rating'])
+        return df_techniques.to_json(orient="records", default_handler = str)
         
-        if as_json:
-          return df_techniques.to_json(orient="records", default_handler = str)
-        else:
-            return df_techniques
 
     def get_ratings_from_techniques(self,techniques):
         all_ratings = []
@@ -161,8 +144,8 @@ class DataHandler:
                 list_tech_names = list(ratings['tech_name'])
                 recommendations.extend(list_tech_names)
             else:
-                top_five = ratings.sort_values('rating', ascending=False).head(numer_of_recommendations)
-                list_tech_names = list(top_five['tech_name'])
+                top_n = ratings.sort_values('rating', ascending=False).head(numer_of_recommendations)
+                list_tech_names = list(top_n['tech_name'])
                 recommendations.extend(list_tech_names)
 
         recommendations = list(set(recommendations))
@@ -182,7 +165,7 @@ class DataHandler:
         top_rated_and_used_by_expert = []
         for user in top_users:
             # list of techs used by user
-            tech_names = [tech['name'] for tech in user['useTechniques']]
+            tech_names = [tech['technique'] for tech in user['useTechniques']]
             # list of techs rated by user
             rated_by_expert = df_ratings.loc[df_ratings['user_id'] == str(user['_id'])]
             # list of techs rated and used by expert
@@ -199,6 +182,114 @@ class DataHandler:
         json_value = df_tech[['_id','name', 'nameT','count', 'rating']].to_json(orient="records", default_handler = str)
         return json_value
 
+    def get_already_used_by_user(self, user_id):
+        # unsure id is a string
+        df_users = self.get_df_users().astype({'_id': 'str'})
+        df_tech = self.get_df_techniques()
+        # get user
+        user = df_users[df_users['_id'] == str(user_id)]
+        # get list of techs used by user
+        tech_names = [tech['technique'] for tech in user['useTechniques'].tolist()[0]]
+        # build response
+        df_tech = df_tech.loc[df_tech['name'].isin(tech_names)]
+        json_value = df_tech[['_id','name', 'nameT','count', 'rating']].to_json(orient="records", default_handler = str)
+        return json_value
+
+    def get_top_rated_and_used_by_user(self, user_id):
+        df_users = self.get_df_users().astype({'_id': 'str'})
+        df_tech = self.get_df_techniques()
+        df_ratings = self.get_df_ratings()
+        # get user
+        user = df_users[df_users['_id'] == str(user_id)].to_dict('records')[0]
+        # get list of techs used by user
+        tech_names = [tech['technique'] for tech in user['useTechniques']]
+        # get list of techs used and rated by user
+        techs_used_and_rated = df_ratings.loc[df_ratings['tech_name'].isin(tech_names)]
+        techs_used_and_rated_by_user = techs_used_and_rated.loc[techs_used_and_rated['user_id'] == str(user_id)]
+        # sort by rating
+        tech_names_rated = techs_used_and_rated_by_user.sort_values('rating', ascending=False)['tech_name']
+        tech_names_sorted = tech_names_rated.to_list()
+        # change name to category
+        df_tech.name = df_tech.name.astype('category')
+        df_tech.name.cat.set_categories(tech_names_sorted, inplace=True)
+        # get techs sorted by name
+        sorted_techs = df_tech.sort_values('name')
+        sorted_techs = sorted_techs.loc[sorted_techs['name'].isin(tech_names_sorted)]
+        
+        json_value = sorted_techs.to_json(orient="records", default_handler = str)
+        return json_value
+
+    def get_used_by_similars_to_same_objective(self, user_id, objective):
+        df_users = self.get_df_users().astype({'_id': 'str'})
+        df_tech = self.get_df_techniques()
+        df_ratings = self.get_df_ratings()
+        algo = self.fit_knn(df_ratings)
+        
+        # get similar users
+        neighbors_user_id = self.find_similar_users(algo, user_id)
+
+        techs_used_by_similars_for_same_objective = []
+        for similar_user in neighbors_user_id:
+            # similar_user = neighbors_user_id[0]
+            user = df_users[df_users['_id'] == str(similar_user)]
+            # get list of techs used by similar user
+            tech_names = [tech['technique'] for tech in user['useTechniques'].tolist()[0]]
+            # get techs used by similar user
+            tech_used_by_similar = df_tech.loc[df_tech['name'].isin(tech_names)]
+            tech_dict = tech_used_by_similar.to_dict('records')
+            # get techs used by similar user for specific objective
+            for tech in tech_dict:
+                if objective in tech['objective']:
+                    techs_used_by_similars_for_same_objective.append(tech['name'])
+
+        # remove duplicates
+        techs_used_by_similars_for_same_objective = list(set(techs_used_by_similars_for_same_objective))
+        # build response
+        selected_techs = df_tech.loc[df_tech['name'].isin(techs_used_by_similars_for_same_objective)]
+        json_value = selected_techs.to_json(orient="records", default_handler = str)
+        return json_value
+
+    def get_top_rated_and_used_by_experts_to_same_objective(self, objective):
+        df_tech = self.get_df_techniques()
+        df_ratings = self.get_df_ratings()
+        df_users = self.get_df_users().astype({'startDT': 'int'})
+        # objective = "Validating ideas"
+
+        #sort users by exeperts
+        sorted = df_users.sort_values('startDT', ascending=True).head(10)
+        top_users = sorted.to_dict('records')
+
+        tech_top_rated_and_used_by_expert = []
+        for user in top_users:
+            # list of techs used by top user
+            tech_names = [tech['technique'] for tech in user['useTechniques']]
+            # list of techs rated by user
+            rated_by_expert = df_ratings.loc[df_ratings['user_id'] == str(user['_id'])]
+            # list of techs rated and used by expert
+            rated_and_used_by_expert = rated_by_expert.loc[rated_by_expert['tech_name'].isin(tech_names)]
+            # top 5 rated and used by expert
+            top_5 = rated_and_used_by_expert.sort_values('rating', ascending=False).head(5)
+            tech_top_rated_and_used_by_expert.extend(list(top_5['tech_name']))
+
+        # remove duplicates        
+        uniq = list(set(tech_top_rated_and_used_by_expert))
+
+        # get top rated techs used by experts for specific objective
+        selected_top_rated = df_tech.loc[df_tech['name'].isin(uniq)]
+        tech_dict = selected_top_rated.to_dict('records')
+        techs_used_by_experts_for_same_objective = []
+        for tech in tech_dict:
+            if objective in tech['objective']:
+                techs_used_by_experts_for_same_objective.append(tech['name'])
+
+        # remove duplicates        
+        uniq = list(set(techs_used_by_experts_for_same_objective))
+        
+        # build response
+        selected_tech_used_by_experts_for_same_objective = df_tech.loc[df_tech['name'].isin(uniq)]
+        json_value = selected_tech_used_by_experts_for_same_objective.to_json(orient="records", default_handler = str)
+        return json_value
+
 # objetivos
 #df_tech = df_tech.loc[df_tech['objective'][0].isin(recommendations)]
 
@@ -212,3 +303,11 @@ class DataHandler:
 
 # trehshold = 10 mais
 # por experts em DT
+
+#%%
+# data_handler = DataHandler()
+
+# objective = "Validating ideas"
+# df_tech = data_handler.get_df_techniques()
+# df_users = data_handler.get_df_users().astype({'startDT': 'int'})
+# df_ratings = data_handler.get_df_ratings()
