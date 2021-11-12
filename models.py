@@ -3,6 +3,18 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
+class Model(BaseModel):    
+    name: List[str]
+    etapas: List[str]
+    label: List[str]
+class Characteristics(BaseModel):    
+    materials: List[str]
+    duration: List[str]
+    location: List[str]
+    participants: List[str]
+    classification: List[str]
+    reference: List[str]
+    
 class Evaluate(BaseModel):
     user: str = None
     rate: float = None
@@ -29,6 +41,9 @@ class Technique(BaseModel):
     projects: List[str] = None
     evaluate: List[Evaluate] = None
     count: float = None
+    characteristics: Characteristics = None
+    objective: List[str] = None
+    models: List[Model] = None
     
     class Config:
         schema_extra = {

@@ -39,15 +39,9 @@ class DataHandler:
         return list(techniques)
     
     
-    def __get_df_techniques(self, 
-                            columns=
-                            ['_id', 'nameT', 'description', 
-                             'howToUse', 'whenToUse', 'projects',
-                             'name', 'rating', 'count', 'image', 
-                             'evaluate', '__v']):
+    def __get_df_techniques(self,):
         technique_df = pd.DataFrame(self.get_techniques())
-        selected_colum_data = technique_df.loc[:,columns]
-        return selected_colum_data
+        return technique_df
     
     def get_df_techniques(self):
         technique_df = pd.DataFrame(self.get_techniques())
@@ -342,39 +336,9 @@ class DataHandler:
 # por experts em DT
 
 #%%
-data_handler = DataHandler()
+# data_handler = DataHandler()
 
-df_tech = data_handler.get_df_techniques()
-df_ratings = data_handler.get_df_ratings()
-objective = "Validating ideas"
-
-# get top techs by users for specific objective
-tech_dict = df_tech.to_dict('records')
-techs_used_for_same_objective = []
-for tech in tech_dict:
-    if objective in tech['objective']:
-        techs_used_for_same_objective.append(tech['name'])
-
-
-# get top 10 techs by users for specific objective
-selected_techs_for_objective = df_ratings.loc[df_ratings['tech_name'].isin(techs_used_for_same_objective)]
-top_rated = selected_techs_for_objective.sort_values('rating', ascending=False).head(10)
-
-# get tech_name list
-names = top_rated['tech_name']
-
-# remove duplicates tech_names
-uniq_names = []
-for name in names:
-    if name not in uniq_names:
-        uniq_names.append(name)
-
-# change name to category
-df_tech.name = df_tech.name.astype('category')
-df_tech.name.cat.set_categories(uniq_names, inplace=True)
-
-# get techs sorted by name
-sorted_techs = df_tech.sort_values('name')
-sorted_techs = sorted_techs.loc[sorted_techs['name'].isin(uniq_names)]
-
-json_value = sorted_techs.to_json(orient="records", default_handler = str)
+# df_tech = data_handler.get_df_techniques()
+# df_ratings = data_handler.get_df_ratings()
+# ['Inspiration', 'Ideation', 'implementation', 'Problem space', 'Solution space']
+# workspace = ''
