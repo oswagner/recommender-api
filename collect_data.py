@@ -321,24 +321,40 @@ class DataHandler:
         json_value = sorted_techs.to_json(orient="records", default_handler = str)
         return json_value
 
-# objetivos
-#df_tech = df_tech.loc[df_tech['objective'][0].isin(recommendations)]
+    def get_top_rated_for_same_workspace(self, workspace):
+        df_tech = self.get_df_techniques()
+        df_ratings = self.get_df_ratings()
+        # all_workspace = ['Inspiration', 'Ideation', 'Implementation', 'Problem space', 'Solution space']
 
-# etapas brown
-# inspiration, ideation, implementation
-# models[0].label[0]
+        techs = df_tech.to_dict('records')
+        techs_for_same_workspace = []
+        for tech in techs:
+            models = tech['models']
+            labels = list(np.array([model['label'] for model in models]).flatten())
+            if len([w for w in workspace if w in labels])>0:
+                techs_for_same_workspace.append(tech['name'])
 
-# etapas gerais
-# problems sapce, solution space
-# models[1].label[0]
+        # get top 10 techs by workspace
+        selected = df_ratings.loc[df_ratings['tech_name'].isin(techs_for_same_workspace)]
+        top_10 = selected.sort_values('rating', ascending=False).head(10)
 
-# trehshold = 10 mais
-# por experts em DT
+        # remove duplicates tech_names
+        names = list(top_10['tech_name'])
+        uniq_names = []
+        for name in names:
+            if name not in uniq_names:
+                uniq_names.append(name)
+
+        # change name to category
+        df_tech.name = df_tech.name.astype('category')
+        df_tech.name.cat.set_categories(uniq_names, inplace=True)
+
+        # get techs sorted by name
+        sorted_techs = df_tech.sort_values('name')
+        sorted_techs = sorted_techs.loc[sorted_techs['name'].isin(uniq_names)]
+
+        sorted_techs
+        json_value = sorted_techs.to_json(orient="records", default_handler = str)
+        return json_value
 
 #%%
-# data_handler = DataHandler()
-
-# df_tech = data_handler.get_df_techniques()
-# df_ratings = data_handler.get_df_ratings()
-# ['Inspiration', 'Ideation', 'implementation', 'Problem space', 'Solution space']
-# workspace = ''
