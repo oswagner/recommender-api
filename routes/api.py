@@ -9,7 +9,7 @@ from collect_data import DataHandler
 router = APIRouter()
 data_handler = DataHandler()
 
-
+## MARk: - Personalized by similar users
 @router.get('/rated_by_similar_users/',
             response_model=List[Technique], 
             responses={status.HTTP_404_NOT_FOUND: {"model": ErroMessage}}, 
@@ -55,7 +55,16 @@ async def top_rated_already_used_by_user(user_id: str):
         model_response = model_mapper(top_rated_used_techniques_str)
         return model_response
 
+@router.get('/top_rated_by_user_for_same_objective/',
+            response_model=List[Technique], 
+            tags=["Personalized by similar users"])
+async def top_rated_by_user_for_same_objective(user_id: str, objective: str):
+        get_top_rated_by_user_for_same_objective_str = data_handler.get_top_rated_by_user_for_same_objective(user_id, objective)
+        model_response = model_mapper(get_top_rated_by_user_for_same_objective_str)
+        return model_response
 
+
+## MARk: - Non-Personalized 
 @router.get('/most_used/', 
             response_model=List[Technique],
             tags=["Non-personalized"])

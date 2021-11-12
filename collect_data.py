@@ -357,4 +357,46 @@ class DataHandler:
         json_value = sorted_techs.to_json(orient="records", default_handler = str)
         return json_value
 
+    def get_top_rated_by_user_for_same_objective(self, user_id, objective):
+        # unsure id is a string
+        df_users = data_handler.get_df_users().astype({'_id': 'str'})
+        df_tech = data_handler.get_df_techniques()
+        df_ratings = data_handler.get_df_ratings()
+
+        # get user
+        user = df_users[df_users['_id'] == str(user_id)]
+        # get list of techs used by user
+        tech_names = [tech['technique'] for tech in user['useTechniques'].tolist()[0]]
+        selected = df_tech.loc[df_tech['name'].isin(tech_names)]
+        tech_dict = selected.to_dict('records')
+
+        # get techs by user for specific objective
+        techs_used_by_user_for_same_objective = []
+        for tech in tech_dict:
+            if objective in tech['objective']:
+                techs_used_by_user_for_same_objective.append(tech['name'])
+
+        # get list of techs used and rated by user
+        techs_used_and_rated = df_ratings.loc[df_ratings['tech_name'].isin(techs_used_by_user_for_same_objective
+        )]
+        techs_used_and_rated_by_user = techs_used_and_rated.loc[techs_used_and_rated['user_id'] == str(user_id)]
+        # sort by rating
+        tech_names_rated = techs_used_and_rated_by_user.sort_values('rating', ascending=False)['tech_name']
+        tech_names_sorted = tech_names_rated.to_list()
+        # change name to category
+        df_tech.name = df_tech.name.astype('category')
+        df_tech.name.cat.set_categories(tech_names_sorted, inplace=True)
+        # get techs sorted by name
+        sorted_techs = df_tech.sort_values('name')
+        sorted_techs = sorted_techs.loc[sorted_techs['name'].isin(tech_names_sorted)]
+
+        json_value = sorted_techs.to_json(orient="records", default_handler = str)
+        return json_value
+
 #%%
+
+# Conjunto de técnicas de DT ordenadas pelas avaliações feitas pelo próprio usuário de Helius, para um determinado objetivo
+data_handler = DataHandler()
+
+# user_id='618eea358e4eb70a7ae91648'
+# objective='Understanding the users-organization relationship'
