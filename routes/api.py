@@ -96,3 +96,20 @@ async def top_rated_by_experts_for_same_objective(objective: str):
     model_response = model_mapper(top_rated_by_experts_str)
     return model_response
 
+
+@router.get('/top_rated_for_same_objective/', 
+            response_model=List[Technique],
+            tags=["api"])
+async def top_rated_for_same_objective(objective: str):
+    top_rated_to_same_objective_str = data_handler.get_top_rated_to_same_objective(objective)
+    model_response = model_mapper(top_rated_to_same_objective_str)
+    return model_response
+
+@router.get('/workspace/', 
+            response_model=List[Technique],
+            tags=["api"])
+async def top_rated_for_same_objective(workspace: str):
+    top_rated_to_same_objective_str = ''
+    model_response = model_mapper(top_rated_to_same_objective_str)
+    return model_response
+
