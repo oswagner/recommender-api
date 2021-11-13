@@ -95,6 +95,7 @@ class DataHandler:
         return json_value
 
     def get_best_cost_benefit(self):
+        df_tech = self.get_df_techniques()
         df_costs_ratigns = self.get_df_ratings_and_costs()
         cost = df_costs_ratigns['cost']
         rating = df_costs_ratigns['rating']
