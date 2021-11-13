@@ -97,6 +97,14 @@ async def top_rated_by_experts():
     model_response = model_mapper(top_rated_by_experts_str)
     return model_response
 
+@router.get('/average_rated_by_experts/', 
+            response_model=List[Technique],
+            tags=["Non-personalized"])
+async def average_rated_by_experts():
+    average_rated_by_experts_str = data_handler.get_average_rated_by_experts()
+    model_response = model_mapper(average_rated_by_experts_str)
+    return model_response
+
 @router.get('/top_rated_by_experts_for_same_objective/', 
             response_model=List[Technique],
             tags=["Non-personalized"])

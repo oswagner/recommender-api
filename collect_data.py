@@ -359,9 +359,9 @@ class DataHandler:
 
     def get_top_rated_by_user_for_same_objective(self, user_id, objective):
         # unsure id is a string
-        df_users = data_handler.get_df_users().astype({'_id': 'str'})
-        df_tech = data_handler.get_df_techniques()
-        df_ratings = data_handler.get_df_ratings()
+        df_users = self.get_df_users().astype({'_id': 'str'})
+        df_tech = self.get_df_techniques()
+        df_ratings = self.get_df_ratings()
 
         # get user
         user = df_users[df_users['_id'] == str(user_id)]
@@ -393,10 +393,23 @@ class DataHandler:
         json_value = sorted_techs.to_json(orient="records", default_handler = str)
         return json_value
 
-#%%
+    def get_average_rated_by_experts(self):
+        df_users = self.get_df_users().astype({'startDT': 'int'})
+        df_tech = self.get_df_techniques()
+        df_ratings = self.get_df_ratings()
 
-# Conjunto de técnicas de DT ordenadas pelas avaliações feitas pelo próprio usuário de Helius, para um determinado objetivo
-data_handler = DataHandler()
+        # sort by exeperts
+        experts_users = df_users.sort_values('startDT', ascending=True).head(10)
+        # get list of experts ids
+        experts_id = [str(user['_id']) for user in experts_users.to_dict('records')]
+        # get ratings by experts
+        experts_rating = df_ratings.loc[df_ratings['user_id'].isin(experts_id)]
+        # get ratings equals to 3
+        rated_eq3 = experts_rating.loc[np.round(experts_rating['rating'],2) == 3.00]
+        # df_ratings
+        tech_names = list(rated_eq3['tech_name'])
 
-# user_id='618eea358e4eb70a7ae91648'
-# objective='Understanding the users-organization relationship'
+        techs = df_tech.loc[df_tech['name'].isin(tech_names)]
+        json_value = techs.to_json(orient="records", default_handler = str)
+        
+        return json_value
