@@ -56,7 +56,73 @@ class DataHandler:
         all_ratings = self.get_ratings_from_techniques(techniques)
         ratings_df = self.build_ratings_data_frame(all_ratings)
         return ratings_df
-     
+
+    def get_df_costs(self,):
+        techniques = self.get_techniques()
+        all_costs = self.get_costs_from_techniques(techniques)
+        cost_df = self.build_cost_data_frame(all_costs)
+        return cost_df
+
+    def get_df_ratings_and_costs(self):
+        df_ratings = self.get_df_ratings()
+        df_costs = self.get_df_costs()
+        df_costs_ratings = pd.merge(df_costs, df_ratings, on=['user_id', 'tech_name'], how='outer')
+        return df_costs_ratings
+
+    def get_low_cost(self):
+        df_tech = self.get_df_techniques()
+        df_costs_ratigns = self.get_df_ratings_and_costs()
+
+        # get top 10 techs with low cost
+        low_cost_sorted = df_costs_ratigns.sort_values('cost', ascending=True).head(10)
+        
+        tech_names = list(low_cost_sorted['tech_name'])
+        # remove duplicates tech_names
+        uniq_names = []
+        for name in tech_names:
+            if name not in uniq_names:
+                uniq_names.append(name)
+
+        # change name to category
+        df_tech.name = df_tech.name.astype('category')
+        df_tech.name.cat.set_categories(uniq_names, inplace=True)
+
+        # get techs sorted by name
+        sorted_techs = df_tech.sort_values('name')
+        sorted_techs = sorted_techs.loc[sorted_techs['name'].isin(uniq_names)]
+
+        json_value = sorted_techs.to_json(orient="records", default_handler = str)
+        return json_value
+
+    def get_best_cost_benefit(self):
+        df_costs_ratigns = self.get_df_ratings_and_costs()
+        cost = df_costs_ratigns['cost']
+        rating = df_costs_ratigns['rating']
+        # evaluate cost benefit
+        cost_benefit = [(cost[i]/rating[i])  for i in range(len(cost))]
+        df_costs_ratigns['cost_benefit'] = cost_benefit
+
+        # sort top 10 by cost benefit
+        sorted = df_costs_ratigns.sort_values('cost_benefit', ascending=False).head(10)
+
+        tech_names = list(sorted['tech_name'])
+        # remove duplicates tech_names
+        uniq_names = []
+        for name in tech_names:
+            if name not in uniq_names:
+                uniq_names.append(name)
+
+        # change name to category
+        df_tech.name = df_tech.name.astype('category')
+        df_tech.name.cat.set_categories(uniq_names, inplace=True)
+
+        # get techs sorted by name
+        sorted_techs = df_tech.sort_values('name')
+        sorted_techs = sorted_techs.loc[sorted_techs['name'].isin(uniq_names)]
+
+        json_value = sorted_techs.to_json(orient="records", default_handler = str)
+        return json_value
+
     
     def most_used_techniques(self):
         df_techniques = self.__get_df_techniques()
@@ -94,7 +160,45 @@ class DataHandler:
 
             all_ratings.append({'tech_name':tech['name'],'rates':unique_rate_per_user})
         return all_ratings
+    
+    def get_costs_from_techniques(self,techniques):
+        all_costs = []
+        for tech in techniques:
+            # print(f"Tech name = [{tech['name']}]")
+            unique_cost_per_user = {}
+            evaluate = tech['evaluate']
+            for i in range(len(evaluate)):
+                left_user_id = evaluate[i]['user']
+                if left_user_id not in unique_cost_per_user:
+                    unique_cost_per_user[left_user_id] = [evaluate[i]['cost']]
+                    for j in range(i+1, len(evaluate)):
+                        right_user_id = evaluate[j]['user']
+                        if left_user_id == right_user_id:
+                            unique_cost_per_user[left_user_id].append(evaluate[j]['cost'])
 
+            unique_cost_per_user = {k: np.mean(v) for k, v in unique_cost_per_user.items()}
+
+            all_costs.append({'tech_name':tech['name'],'cost':unique_cost_per_user})
+        return all_costs
+
+    def build_cost_data_frame(self, all_costs):
+        all_users = []
+        all_techs = []
+        all_cost = []
+        for cost in all_costs:
+            users = [k for k in cost['cost']]
+            values = [v for v in cost['cost'].values()]
+            tech_names = [ ]
+            for _ in range(len(users)):
+                tech_names.append(cost['tech_name'])
+            all_users.extend(users)
+            all_cost.extend(values)
+            all_techs.extend(tech_names)
+
+        data_frame_structure = {'user_id': all_users, 'tech_name': all_techs, 'cost': all_cost}
+        cost_df = pd.DataFrame(data_frame_structure)
+        return cost_df
+    
     def build_ratings_data_frame(self, all_ratings):
         all_users = []
         all_rates = []

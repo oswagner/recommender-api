@@ -105,6 +105,22 @@ async def average_rated_by_experts():
     model_response = model_mapper(average_rated_by_experts_str)
     return model_response
 
+@router.get('/low_cost/', 
+            response_model=List[Technique],
+            tags=["Non-personalized"])
+async def low_cost():
+    low_cost_str = data_handler.get_low_cost()
+    model_response = model_mapper(low_cost_str)
+    return model_response
+
+@router.get('/best_cost_benefit/', 
+            response_model=List[Technique],
+            tags=["Non-personalized"])
+async def best_cost_benefit():
+    best_cost_benefit_str = data_handler.get_best_cost_benefit()
+    model_response = model_mapper(best_cost_benefit_str)
+    return model_response
+
 @router.get('/top_rated_by_experts_for_same_objective/', 
             response_model=List[Technique],
             tags=["Non-personalized"])
