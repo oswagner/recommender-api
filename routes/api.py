@@ -152,11 +152,11 @@ async def top_rated_for_same_objective(objective: str):
     model_response = model_mapper(top_rated_to_same_objective_str)
     return model_response
 
-@router.get('/workspace/',
+@router.get('/workingspace/',
             description="Técnicas por espaço de trabalho [MUST USE ENGLISH VALUES]",
             response_model=List[Technique],
             tags=["Non-personalized"])
-async def same_workspace(workspace: List[str] = Query(..., example=['Inspiration', 'Ideation', 'Implementation', 'Problem space', 'Solution space'])):
-    same_workspace_str = data_handler.get_top_rated_for_same_workspace(workspace)
+async def same_workingspace(workingspace: List[str] = Query(..., example=['Inspiration', 'Ideation', 'Implementation', 'Problem space', 'Solution space'])):
+    same_workspace_str = data_handler.get_top_rated_for_same_workspace(workingspace)
     model_response = model_mapper(same_workspace_str)
     return model_response
