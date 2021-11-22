@@ -234,10 +234,15 @@ class DataHandler:
         neighbors_user_id = [algo.trainset.to_raw_uid(inner_id) for inner_id in neighbors]
         return neighbors_user_id
 
-    def techinque_recommendations(self,ratings_df, neighbors_user_id, numer_of_recommendations=None):
+    def get_rated_by_similar_users(self, user_id, numer_of_recommendations = None):
+        print(f'User that wants a recommendation id = [{user_id}]')
+        ratings_df = self.get_df_ratings()
+        algo = self.fit_knn(ratings_df)
+        neighbors_user_id = self.find_similar_users(algo, user_id)
+
         recommendations = []
         for user_id in neighbors_user_id:
-            print(f"User id = [{user_id}]")
+            print(f"Similar Users id = [{user_id}]")
             ratings = ratings_df.loc[ratings_df['user_id'] == user_id]
             if numer_of_recommendations is None:
                 list_tech_names = list(ratings['tech_name'])
@@ -248,10 +253,13 @@ class DataHandler:
                 recommendations.extend(list_tech_names)
 
         recommendations = list(set(recommendations))
+        print(f"Techniques used by similar users = [{recommendations}]")
         df_tech = self.get_df_techniques()
         df_tech = df_tech.loc[df_tech['name'].isin(recommendations)]
+        print(f"Techniques recommended = [{list(df_tech['name'])}]")
         json_value = df_tech.to_json(orient="records", default_handler = str)
         return json_value
+
 
     def get_top_rated_and_used_by_experts(self,):
         df_ratings = self.get_df_ratings()

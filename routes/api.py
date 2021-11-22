@@ -16,13 +16,8 @@ data_handler = DataHandler()
             tags=["Personalized by similar users"],
             description="Todas técnicas usadas por usuários similares e Técnicas bem avaliadas por usuários similares, ao passar a query string `n_techniques`")
 async def rated_by_similar_users(user_id: str, n_techniques: int = None):
-    techniques = data_handler.get_techniques()
-    all_ratings = data_handler.get_ratings_from_techniques(techniques)
-    ratings_df = data_handler.build_ratings_data_frame(all_ratings)
-    algo = data_handler.fit_knn(ratings_df)
     try:
-        neighbors_user_id = data_handler.find_similar_users(algo, user_id)
-        recommendations_json_str = data_handler.techinque_recommendations(ratings_df, neighbors_user_id, numer_of_recommendations=n_techniques)
+        recommendations_json_str = data_handler.get_rated_by_similar_users(user_id, n_techniques)
         model_response = model_mapper(recommendations_json_str)
         return model_response
     except ValueError as e:
