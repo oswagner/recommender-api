@@ -3,11 +3,18 @@ from fastapi.responses import JSONResponse
 from typing import List
 from models import Technique, ErroMessage, model_mapper
 from fastapi import APIRouter, status, Query
-from collect_data import DataHandler
+from database_reader.database_reader_mongo import DatabaseReaderMongo
+from specialized_recommender import non_personalized
+from specialized_recommender.non_personalized import NonPesonalizedRecommender
+from specialized_recommender.personalized import PesonalizedRecommender
 
 
 router = APIRouter()
-data_handler = DataHandler()
+mongoReader = DatabaseReaderMongo()
+
+personalized = PesonalizedRecommender(mongoReader)
+non_personalized = NonPesonalizedRecommender(mongoReader)
+
 
 ## MARk: - Personalized by similar users
 @router.get('/rated_by_similar_users/',
@@ -17,7 +24,7 @@ data_handler = DataHandler()
             description="Todas técnicas usadas por usuários similares e Técnicas bem avaliadas por usuários similares, ao passar a query string `n_techniques`")
 async def rated_by_similar_users(user_id: str, n_techniques: int = None):
     try:
-        recommendations_json_str = data_handler.get_rated_by_similar_users(user_id, n_techniques)
+        recommendations_json_str = personalized.get_rated_by_similar_users(user_id, n_techniques)
         model_response = model_mapper(recommendations_json_str)
         return model_response
     except ValueError as e:
@@ -30,7 +37,7 @@ async def rated_by_similar_users(user_id: str, n_techniques: int = None):
             description="Todas técnicas usadas por usuários similares para um objetivo")
 async def same_objective_by_similar_users(user_id: str, objective: str):
     try:
-        recommendations_json_str = data_handler.get_used_by_similars_to_same_objective(user_id, objective)
+        recommendations_json_str = personalized.get_used_by_similars_to_same_objective(user_id, objective)
         model_response = model_mapper(recommendations_json_str)
         return model_response
     except ValueError as e:
@@ -41,7 +48,7 @@ async def same_objective_by_similar_users(user_id: str, objective: str):
             tags=["Personalized by similar users"],
             description="Técnicas já usadas")
 async def already_used_by_user(user_id: str):
-        used_techniques_str = data_handler.get_already_used_by_user(user_id)
+        used_techniques_str = personalized.get_already_used_by_user(user_id)
         model_response = model_mapper(used_techniques_str)
         return model_response
 
@@ -50,7 +57,7 @@ async def already_used_by_user(user_id: str):
             tags=["Personalized by similar users"],
             description="Técnicas já usadas e bem avaliadas")
 async def top_rated_already_used_by_user(user_id: str):
-        top_rated_used_techniques_str = data_handler.get_top_rated_and_used_by_user(user_id)
+        top_rated_used_techniques_str = personalized.get_top_rated_and_used_by_user(user_id)
         model_response = model_mapper(top_rated_used_techniques_str)
         return model_response
 
@@ -59,7 +66,7 @@ async def top_rated_already_used_by_user(user_id: str):
             tags=["Personalized by similar users"],
             description="Técnicas por objetivo bem avaliadas pelo usuário")
 async def top_rated_by_user_for_same_objective(user_id: str, objective: str):
-        get_top_rated_by_user_for_same_objective_str = data_handler.get_top_rated_by_user_for_same_objective(user_id, objective)
+        get_top_rated_by_user_for_same_objective_str = personalized.get_top_rated_by_user_for_same_objective(user_id, objective)
         model_response = model_mapper(get_top_rated_by_user_for_same_objective_str)
         return model_response
 
@@ -70,7 +77,7 @@ async def top_rated_by_user_for_same_objective(user_id: str, objective: str):
             tags=["Non-personalized"],
             description="Técnicas mais usadas")
 async def most_used():
-    most_used_techniques_str = data_handler.most_used_techniques()
+    most_used_techniques_str = non_personalized.most_used_techniques()
     model_response = model_mapper(most_used_techniques_str)
     return model_response
 
@@ -79,7 +86,7 @@ async def most_used():
             tags=["Non-personalized"],
             description="Técnicas melhor avaliadas")
 async def top_rated():
-    top_rated_techniques_str = data_handler.top_rated_techniques()
+    top_rated_techniques_str = non_personalized.top_rated_techniques()
     model_response = model_mapper(top_rated_techniques_str)
     return model_response
 
@@ -88,7 +95,7 @@ async def top_rated():
             tags=["Non-personalized"],
             description="Todas as técnicas")
 async def all():
-    all_techniques_str = data_handler.all_techniques()
+    all_techniques_str = non_personalized.all_techniques()
     model_response = model_mapper(all_techniques_str)
     return model_response
 
@@ -97,7 +104,7 @@ async def all():
             tags=["Non-personalized"],
             description="Técnicas bem avaliadas por experts em DT")
 async def top_rated_by_experts():
-    top_rated_by_experts_str = data_handler.get_top_rated_and_used_by_experts()
+    top_rated_by_experts_str = non_personalized.get_top_rated_and_used_by_experts()
     model_response = model_mapper(top_rated_by_experts_str)
     return model_response
 
@@ -106,7 +113,7 @@ async def top_rated_by_experts():
             tags=["Non-personalized"],
             description="Técnicas com avaliação média")
 async def average_rated_by_experts():
-    average_rated_by_experts_str = data_handler.get_average_rated_by_experts()
+    average_rated_by_experts_str = non_personalized.get_average_rated_by_experts()
     model_response = model_mapper(average_rated_by_experts_str)
     return model_response
 
@@ -115,7 +122,7 @@ async def average_rated_by_experts():
             tags=["Non-personalized"],
             description="Técnicas de baixo custo")
 async def low_cost():
-    low_cost_str = data_handler.get_low_cost()
+    low_cost_str = non_personalized.get_low_cost()
     model_response = model_mapper(low_cost_str)
     return model_response
 
@@ -124,7 +131,7 @@ async def low_cost():
             tags=["Non-personalized"],
             description="Técnicas com alta razão custo-benefício")
 async def best_cost_benefit():
-    best_cost_benefit_str = data_handler.get_best_cost_benefit()
+    best_cost_benefit_str = non_personalized.get_best_cost_benefit()
     model_response = model_mapper(best_cost_benefit_str)
     return model_response
 
@@ -133,7 +140,7 @@ async def best_cost_benefit():
             tags=["Non-personalized"],
             description="Técnicas por objetivo")
 async def top_rated_by_experts_for_same_objective(objective: str):
-    top_rated_by_experts_str = data_handler.get_top_rated_and_used_by_experts_to_same_objective(objective)
+    top_rated_by_experts_str = non_personalized.get_top_rated_and_used_by_experts_to_same_objective(objective)
     model_response = model_mapper(top_rated_by_experts_str)
     return model_response
 
@@ -143,7 +150,7 @@ async def top_rated_by_experts_for_same_objective(objective: str):
             tags=["Non-personalized"],
             description="Técnicas bem avaliadas para o mesmo objetivo")
 async def top_rated_for_same_objective(objective: str):
-    top_rated_to_same_objective_str = data_handler.get_top_rated_to_same_objective(objective)
+    top_rated_to_same_objective_str = non_personalized.get_top_rated_to_same_objective(objective)
     model_response = model_mapper(top_rated_to_same_objective_str)
     return model_response
 
@@ -152,6 +159,6 @@ async def top_rated_for_same_objective(objective: str):
             response_model=List[Technique],
             tags=["Non-personalized"])
 async def same_workingspace(workingspace: List[str] = Query(..., example=['Inspiration', 'Ideation', 'Implementation', 'Problem space', 'Solution space'])):
-    same_workspace_str = data_handler.get_top_rated_for_same_workspace(workingspace)
+    same_workspace_str = non_personalized.get_top_rated_for_same_workspace(workingspace)
     model_response = model_mapper(same_workspace_str)
     return model_response
