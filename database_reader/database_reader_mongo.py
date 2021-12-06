@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from statistics import mode
 from pymongo import MongoClient
 from database_reader.database_interface import DatabaseInterface
 
@@ -69,7 +70,7 @@ class DatabaseReaderMongo(DatabaseInterface):
                         if left_user_id == right_user_id:
                             unique_rate_per_user[left_user_id].append(ratings[j]['rate'])
 
-            unique_rate_per_user = {k: np.mean(v) for k, v in unique_rate_per_user.items()}
+            unique_rate_per_user = {k: mode(v) for k, v in unique_rate_per_user.items()}
 
             all_ratings.append({'tech_name':tech['name'],'rates':unique_rate_per_user})
         return all_ratings
