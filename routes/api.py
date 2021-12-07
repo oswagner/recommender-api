@@ -1,4 +1,3 @@
-from collect_data import DataHandler
 from fastapi.responses import JSONResponse
 from typing import List
 from models import Technique, ErroMessage, model_mapper
