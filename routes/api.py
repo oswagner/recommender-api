@@ -3,7 +3,6 @@ from typing import List
 from models import Technique, ErroMessage, model_mapper
 from fastapi import APIRouter, status, Query
 from database_reader.database_reader_mongo import DatabaseReaderMongo
-from specialized_recommender import non_personalized
 from specialized_recommender.non_personalized import NonPesonalizedRecommender
 from specialized_recommender.personalized import PesonalizedRecommender
 
