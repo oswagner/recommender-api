@@ -76,7 +76,7 @@ async def top_rated_by_user_for_same_objective(user_id: str, objective: str):
             tags=["Non-personalized"],
             description="Técnicas mais usadas")
 async def most_used():
-    most_used_techniques_str = non_personalized.most_used_techniques()
+    most_used_techniques_str = non_personalized.get_most_used_techniques()
     model_response = model_mapper(most_used_techniques_str)
     return model_response
 
@@ -85,7 +85,7 @@ async def most_used():
             tags=["Non-personalized"],
             description="Técnicas melhor avaliadas")
 async def top_rated():
-    top_rated_techniques_str = non_personalized.top_rated_techniques()
+    top_rated_techniques_str = non_personalized.get_top_rated_techniques()
     model_response = model_mapper(top_rated_techniques_str)
     return model_response
 
@@ -94,7 +94,7 @@ async def top_rated():
             tags=["Non-personalized"],
             description="Todas as técnicas")
 async def all():
-    all_techniques_str = non_personalized.all_techniques()
+    all_techniques_str = non_personalized.get_all_techniques()
     model_response = model_mapper(all_techniques_str)
     return model_response
 
