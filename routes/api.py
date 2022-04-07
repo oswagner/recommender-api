@@ -1,6 +1,6 @@
 from fastapi.responses import JSONResponse
 from typing import List
-from models import Technique, ErroMessage, model_mapper
+from models import User, Technique, ErroMessage, model_mapper
 from fastapi import APIRouter, status, Query
 from database_reader.database_reader_mongo import DatabaseReaderMongo
 from specialized_recommender.non_personalized import NonPesonalizedRecommender
@@ -15,6 +15,21 @@ non_personalized = NonPesonalizedRecommender(mongoReader)
 
 
 ## MARk: - Personalized by similar users
+@router.get('/similar_users/',
+            response_model=List[User], 
+            responses={status.HTTP_404_NOT_FOUND: {"model": ErroMessage}}, 
+            tags=["Personalized by similar users"],
+            description="Usuários similares")
+async def similar_users(user_id: str):
+    try:
+        similar_users_json_str = personalized.get_similar_users(user_id)
+        model_response = model_mapper(similar_users_json_str)
+        return model_response
+    except ValueError as e:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={'message': str(e)})
+
+
+
 @router.get('/rated_by_similar_users/',
             response_model=List[Technique], 
             responses={status.HTTP_404_NOT_FOUND: {"model": ErroMessage}}, 

@@ -129,9 +129,36 @@ class Technique(BaseModel):
 class ErroMessage(BaseModel):
     message: str
 
+
+class User(BaseModel):
+    id: str = Field(..., alias='_id')
+    # onBoard: str = None
+    name: str = None
+    email: str = None
+    # password: str = None
+    # function: str = None
+    # startDT: str = None
+    # formation: str = None
+    # photo: str = None
+
 def model_mapper(json_str):
     tech_dict = json.loads(json_str)
     # print(f"[model_mapper - tech_dict]: {tech_dict} \n")
     tech_list = [ Technique(**tech) for tech in tech_dict ]
     # print(f"[model_mapper - tech_list]: {tech_dict} \n")
     return tech_list
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

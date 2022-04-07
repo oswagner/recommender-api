@@ -24,6 +24,22 @@ class PesonalizedRecommender:
         neighbors_user_id = [algo.trainset.to_raw_uid(inner_id) for inner_id in neighbors]
         return neighbors_user_id
 
+
+  def get_similar_users(self, user_id):
+      print(f'User that wants a recommendation id = [{user_id}]')
+      ratings_df = self.db.get_df_ratings()
+      algo = self.__fit_knn(ratings_df)
+      neighbors_user_id = self.__find_similar_users(algo, user_id)
+
+      print(f"Similar Users id = [{neighbors_user_id}]")
+      
+      df_users = self.db.get_df_users().astype({'_id': 'str'})
+      
+      df_users = df_users.loc[df_users['_id'].isin(neighbors_user_id)]
+      json_value = df_users.to_json(orient="records", default_handler = str)
+      return json_value
+  
+
   def get_rated_by_similar_users(self, user_id, numer_of_recommendations = None):
         print(f'User that wants a recommendation id = [{user_id}]')
         ratings_df = self.db.get_df_ratings()
