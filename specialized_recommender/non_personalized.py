@@ -1,5 +1,5 @@
 import numpy as np
-from database_reader.database_reader_mongo import DatabaseInterface
+from database_reader.database_reader_mongo import DatabaseInterface 
 
 
 class NonPesonalizedRecommender:
@@ -13,11 +13,13 @@ class NonPesonalizedRecommender:
 
   def get_most_used_techniques(self):
     df_techniques = self.db.get_df_techniques()
+    df_techniques.drop(df_techniques[df_techniques['count'] == 0].index, inplace=True)
     most_used_technique = df_techniques.sort_values('count', ascending=False)
     return most_used_technique.to_json(orient="records", default_handler = str)
 
   def get_top_rated_techniques(self):
     df_techniques = self.db.get_df_techniques()
+    df_techniques.drop(df_techniques[df_techniques['count'] == 0].index, inplace=True)
     top_rated_technique = df_techniques.sort_values('rating',  ascending=False)
     return top_rated_technique.to_json(orient="records", default_handler = str)
 
